@@ -6,6 +6,7 @@ const Home = () => {
   const [itemPrice, setItemPrice] = useState("");
   const [storeName, setStoreName] = useState("My Store");
   const [taxRate, setTaxRate] = useState(10);
+  const [printStatus, setPrintStatus] = useState("");
   const printRef = useRef();
 
   const addItem = () => {
@@ -17,7 +18,6 @@ const Home = () => {
       setItems([...items, newItem]);
       setItemName("");
       setItemPrice("");
-      // Auto-focus on item name input after adding
       document.getElementById("itemNameInput")?.focus();
     }
   };
@@ -41,9 +41,22 @@ const Home = () => {
   };
 
   const handlePrint = () => {
-    const printContent = printRef.current.innerHTML;
-    const printWindow = window.open("", "", "width=300,height=600");
-    printWindow.document.write(`
+    setPrintStatus("Preparing receipt...");
+
+    // Create a hidden iframe for printing
+    const printFrame = document.createElement("iframe");
+    printFrame.style.position = "absolute";
+    printFrame.style.left = "-9999px";
+    printFrame.style.top = "0";
+    printFrame.style.width = "300px";
+    printFrame.style.height = "600px";
+    printFrame.id = "printFrame";
+    document.body.appendChild(printFrame);
+
+    const printDocument = printFrame.contentWindow.document;
+
+    printDocument.open();
+    printDocument.write(`
       <html>
         <head>
           <title>Receipt</title>
@@ -63,15 +76,43 @@ const Home = () => {
             .thank-you { margin-top: 20px; font-style: italic; }
           </style>
         </head>
-        <body onload="window.print(); window.close();">
-          ${printContent}
+        <body>
+          ${printRef.current.innerHTML}
+          <script>
+            setTimeout(function() {
+              window.print();
+              setTimeout(function() {
+                window.parent.postMessage('printComplete', '*');
+              }, 500);
+            }, 200);
+          </script>
         </body>
       </html>
     `);
-    printWindow.document.close();
+    printDocument.close();
+
+    // Listen for print completion
+    window.addEventListener(
+      "message",
+      function (event) {
+        if (event.data === "printComplete") {
+          document.body.removeChild(printFrame);
+          setPrintStatus("");
+        }
+      },
+      { once: true }
+    );
+
+    // Fallback in case message doesn't come through
+    setTimeout(() => {
+      const frame = document.getElementById("printFrame");
+      if (frame) {
+        document.body.removeChild(frame);
+        setPrintStatus("");
+      }
+    }, 3000);
   };
 
-  // Handle Enter key press for quick item addition
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
       addItem();
@@ -90,6 +131,12 @@ const Home = () => {
 
         {/* Main Content */}
         <div className="p-4 md:p-6">
+          {printStatus && (
+            <div className="mb-4 p-3 bg-blue-100 text-blue-800 rounded">
+              {printStatus}
+            </div>
+          )}
+
           <div className="flex flex-col gap-4">
             {/* Store Info Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -243,14 +290,14 @@ const Home = () => {
             {/* Print Button */}
             <button
               onClick={handlePrint}
-              disabled={items.length === 0}
+              disabled={items.length === 0 || printStatus}
               className={`w-full py-3 px-4 rounded-md text-white font-medium ${
-                items.length === 0
+                items.length === 0 || printStatus
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-blue-600 hover:bg-blue-700"
               } transition duration-200`}
             >
-              Print Receipt
+              {printStatus ? printStatus : "Print Receipt"}
             </button>
           </div>
         </div>
