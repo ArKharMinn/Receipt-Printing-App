@@ -4,8 +4,10 @@ const Home = () => {
   const [items, setItems] = useState([]);
   const [itemName, setItemName] = useState("");
   const [itemPrice, setItemPrice] = useState("");
+  const [storeAddress, setStoreAddress] = useState("");
+  const [storePhone, setStorePhone] = useState("");
   const [storeName, setStoreName] = useState("My Store");
-  const [taxRate, setTaxRate] = useState(10);
+  const [taxRate, setTaxRate] = useState(0);
   const [printStatus, setPrintStatus] = useState("");
   const printRef = useRef();
 
@@ -43,7 +45,6 @@ const Home = () => {
   const handlePrint = () => {
     setPrintStatus("Preparing receipt...");
 
-    // Create a hidden iframe for printing
     const printFrame = document.createElement("iframe");
     printFrame.style.position = "absolute";
     printFrame.style.left = "-9999px";
@@ -103,7 +104,6 @@ const Home = () => {
       { once: true }
     );
 
-    // Fallback in case message doesn't come through
     setTimeout(() => {
       const frame = document.getElementById("printFrame");
       if (frame) {
@@ -161,6 +161,32 @@ const Home = () => {
                   type="number"
                   value={taxRate}
                   onChange={(e) => setTaxRate(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Tax Rate"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Address
+                </label>
+                <input
+                  type="text"
+                  value={storeAddress}
+                  onChange={(e) => setStoreAddress(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Tax Rate"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  value={storePhone}
+                  onChange={(e) => setStorePhone(e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Tax Rate"
                 />
@@ -243,10 +269,10 @@ const Home = () => {
               <div ref={printRef} className="bg-white p-4 rounded">
                 <div className="center bold text-lg">{storeName}</div>
                 <div className="center text-sm text-gray-500 mb-2">
-                  123 Main St, City
+                  {storeAddress}
                 </div>
                 <div className="center text-sm text-gray-500">
-                  Tel: (123) 456-7890
+                  Tel: {storePhone}
                 </div>
                 <div className="divider"></div>
                 <div className="text-xs text-gray-500 center">
